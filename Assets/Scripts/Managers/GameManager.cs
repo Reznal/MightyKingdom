@@ -1,10 +1,12 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    public static Action OnGameStart;
+    public static Action OnGameEnded;
     public static Action<ColourOption> OnSetWordDisplay;
     public static Action<List<ColourOption>> OnSetPlayerOptions;
     public static Action<string> OnAnswerAttempted;
@@ -13,18 +15,53 @@ public class GameManager : MonoBehaviour
     public static readonly int AdditionalOptions = 3;
 
     private ColourOption _answer;
+    private List<ColourOption> _answerOptions = new List<ColourOption>();
     private List<ColourOption> _playerOptions = new List<ColourOption>();
 
-    private void Awake() => OnAnswerAttempted += AnswerAttempted;
-    private void OnDestroy() => OnAnswerAttempted -= AnswerAttempted;
+    private void Awake()
+    {
+        OnGameStart += GameStart;
+        OnAnswerAttempted += AnswerAttempted;
+    }
 
-    private void Start() => GetRoundData();
+    private void OnDestroy()
+    {
+        OnGameStart -= GameStart;
+        OnAnswerAttempted -= AnswerAttempted;
+    }
 
+    private void Start() => CanvasManager.OnShowMainMenu?.Invoke(true);
+
+    private void GameStart() => StartNewGame();
+
+    /// <summary>
+    /// Player attempted an answer
+    /// Display result and new round
+    /// </summary>
+    /// <param name="value"></param>
     private void AnswerAttempted(string value)
     {
         bool won = value == _answer.name;
 
         OnResult?.Invoke(won);
+
+        if (_answerOptions.Count <= 0)
+        {
+            FinishRound();
+            return;
+        }
+
+        GetRoundData();
+    }
+
+    /// <summary>
+    /// Start a new game
+    /// </summary>
+    private void StartNewGame()
+    {
+        CanvasManager.OnShowMainMenu?.Invoke(false);
+
+        _answerOptions = new List<ColourOption>(ColourManager.instance.Colours);
         GetRoundData();
     }
 
@@ -35,10 +72,11 @@ public class GameManager : MonoBehaviour
     {
         _playerOptions.Clear();
 
-        List<ColourOption> options = new List<ColourOption>(ColourManager.instance.Colours);
-
         //Get answer
-        _answer = GetOption(options);
+        _answer = GetOption(_answerOptions);
+
+        //Get a list of additional options
+        List<ColourOption> options = new List<ColourOption>(ColourManager.instance.Colours).Where(x => x.name != _answer.name).ToList();
 
         //Get additional options for player selection
         for (int i = 0; i < AdditionalOptions; i++)
@@ -53,6 +91,12 @@ public class GameManager : MonoBehaviour
         _playerOptions.Add(_answer);
 
         OnSetPlayerOptions?.Invoke(_playerOptions);
+    }
+
+    private void FinishRound()
+    {
+        Debug.Log("Finish");
+        OnGameEnded?.Invoke();
     }
 
     /// <summary>
