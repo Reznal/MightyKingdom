@@ -12,8 +12,15 @@ public class GameManager : MonoBehaviour
     public static Action<string> OnAnswerAttempted;
     public static Action<bool> OnResult;
 
+    //Time
+    public static float GameStartTime { get; private set; }
+    public static float LastAttemptTime { get; private set; }
     public static readonly int AdditionalOptions = 3;
 
+    //Current score
+    public static int CorrectAnswers { get; private set; }
+
+    //Options
     private ColourOption _answer;
     private List<ColourOption> _answerOptions = new List<ColourOption>();
     private List<ColourOption> _playerOptions = new List<ColourOption>();
@@ -32,7 +39,21 @@ public class GameManager : MonoBehaviour
 
     private void Start() => CanvasManager.OnShowMainMenu?.Invoke(true);
 
-    private void GameStart() => StartNewGame();
+    /// <summary>
+    /// Start a new game
+    /// </summary>
+    private void GameStart()
+    {
+        CorrectAnswers = 0;
+
+        CanvasManager.OnShowMainMenu?.Invoke(false);
+
+        GameStartTime = Time.realtimeSinceStartup;
+        LastAttemptTime = GameStartTime;
+
+        _answerOptions = new List<ColourOption>(ColourManager.instance.Colours);
+        GetRoundData();
+    }
 
     /// <summary>
     /// Player attempted an answer
@@ -43,6 +64,9 @@ public class GameManager : MonoBehaviour
     {
         bool won = value == _answer.name;
 
+        if (won)
+            CorrectAnswers++;
+
         OnResult?.Invoke(won);
 
         if (_answerOptions.Count <= 0)
@@ -52,17 +76,8 @@ public class GameManager : MonoBehaviour
         }
 
         GetRoundData();
-    }
 
-    /// <summary>
-    /// Start a new game
-    /// </summary>
-    private void StartNewGame()
-    {
-        CanvasManager.OnShowMainMenu?.Invoke(false);
-
-        _answerOptions = new List<ColourOption>(ColourManager.instance.Colours);
-        GetRoundData();
+        LastAttemptTime = Time.realtimeSinceStartup;
     }
 
     /// <summary>

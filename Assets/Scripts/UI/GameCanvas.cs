@@ -8,7 +8,7 @@ public class GameCanvas : MonoBehaviour
     [SerializeField] private GameObject _gameObject;
     [SerializeField] private GameObject _endObject;
 
-    private void Awake()
+    public void Awake()
     {
         GameManager.OnGameStart += GameManager_OnGameStart;
         GameManager.OnGameEnded += GameManager_OnGameEnded;

@@ -52,9 +52,10 @@ public class ResultUI : MonoBehaviour
         else
             _sb.Append($"<color=#{_incorrectColourHex}>Incorrect</color>");
 
-        _sb.AppendLine();
+        //Append time
+        _sb.Append($" - {Math.Round(Time.realtimeSinceStartup - GameManager.LastAttemptTime, 2)} seconds.");
 
-        //Display updated text
+        _sb.AppendLine();
         _text.text = _sb.ToString();
     }
 }
